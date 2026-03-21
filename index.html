@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=2560, initial-scale=1.0">
+  <title>DAO龙潭共创地图</title>
+  <meta name="description" content="全屏中国地图大屏展示，实时签到飞线动画效果">
+  <link rel="stylesheet" href="css/style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div id="screen-wrapper">
+    <header id="header">
+      <div class="header-left">
+        <img src="public/logo.png" alt="DAO龙潭" class="logo-image">
+      </div>
+      <div class="header-center">
+        <h1>DAO龙潭共创地图</h1>
+      </div>
+      <div class="header-right"> &nbsp;
+      </div>
+    </header>
+
+    <!-- 全屏弹幕层 -->
+    <div id="danmaku-container"></div>
+
+    <div id="main-area">
+      <!-- 地图 -->
+      <div id="map-container"></div>
+
+      <!-- 左侧区域 -->
+      <div class="side-panel left-panel">
+        <!-- 累计到访 -->
+        <div class="card-panel" id="panel-counter">
+          <div class="panel-title">累计到访</div>
+          <div class="counter-number" id="total-nomads">0</div>
+        </div>
+
+        <!-- 来源 TOP 榜 -->
+        <div class="card-panel" id="panel-top-list">
+          <div class="panel-title">来源TOP榜</div>
+          <ul class="top-list" id="top-list">
+            <li class="top-item empty"><span class="rank">--</span><span class="city">暂无数据</span><span
+                class="count">0</span></li>
+          </ul>
+        </div>
+
+        <!-- 3D地球容器 -->
+        <div class="globe-panel" id="panel-globe">
+          <div class="globe-container">
+            <img class="globe-image" src="public/globel.png" alt="海外的地球">
+            <div class="globe-overseas">海外<br /><span class="overseas-count">41</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧区域 -->
+      <div class="side-panel right-panel">
+        <!-- 加入事件列表 -->
+        <div class="card-panel" id="panel-join-events">
+          <div class="join-list-container">
+            <ul class="join-list" id="join-list">
+              <!-- JS 渲染列表项 -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- 职业类型饼图 -->
+        <div class="card-panel" id="panel-occupation">
+          <div class="panel-title">职业类型</div>
+          <div class="chart-box" id="chart-occupation"></div>
+        </div>
+
+        <!-- 年龄分布饼图 -->
+        <div class="card-panel" id="panel-age">
+          <div class="panel-title">年龄分布</div>
+          <div class="chart-box" id="chart-age"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script> -->
+  <script src="js/cityCoords.js"></script>
+  <script src="js/mapConfig.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,554 @@
+@font-face {
+  font-family: 'Unique';
+  src: url('../public/Unique.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================
+   全球大屏展示样式 - 自适应 100% 布局
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #463d35; /* 严格按照设计图取色的底图颜色 */
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #f3e8ff;
+}
+
+/* 整体包裹 - 100vw/100vh 自适应 */
+#screen-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #463d35; /* 移除放射渐变，使用设计图的底色 */
+  position: relative;
+}
+
+/* ============================================
+   头部样式 
+   ============================================ */
+#header {
+  height: 60px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  background-color: #2B1C07;
+  z-index: 10;
+  flex-shrink: 0;
+  padding: 0 64px;
+}
+
+
+
+.header-left, .header-right {
+  width: 20%;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  justify-content: flex-end;
+  color: #bfa15f;
+  cursor: pointer;
+}
+
+
+
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+.header-left h2 {
+  margin: 0;
+  padding: 0;
+}
+.logo-image {
+  width: 64px;
+  height: 138px;
+  object-fit: contain;
+}
+
+.header-center h1 {
+  font-family: 'Unique', 'Noto Sans SC', sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 8px;
+  color: #EFFAFF;
+}
+
+/* ============================================
+   全屏弹幕 - 设计稿：深褐圆角卡片、圆角方形头像、白色文字
+   ============================================ */
+#danmaku-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.danmaku-item {
+  position: absolute;
+  left: 0;
+  display: flex;
+  height: clamp(48px, 5vh, 64px);
+  align-items: center;
+  background: rgba(43, 28, 7, 0.55);
+  border-radius: 12px;
+  overflow: hidden;
+  padding-right: clamp(12px, 1vw, 18px);
+  white-space: nowrap;
+  pointer-events: auto;
+  transform: translateX(100%);
+  animation: danmaku-fly linear forwards;
+}
+
+.danmaku-avatar {
+  height: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #333;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px 0 0 12px;
+  margin-right: clamp(8px, 0.8vw, 14px);
+}
+
+.danmaku-text {
+  font-size: clamp(14px, 1.3vw, 18px);
+  color: #fff;
+}
+
+@keyframes danmaku-fly {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(calc(-100%)); }
+}
+
+/* ============================================
+   主区域 
+   ============================================ */
+#main-area {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  padding: 2vw;
+}
+
+/* 地图容器 */
+#map-container {
+  position: absolute;
+  top: -4vh;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* 移除了自编的经纬图网格，设计图是使用图片贴图，我们保留干净背景 */
+
+/* ============================================
+   左右侧面板容器
+   ============================================ */
+.side-panel {
+  position: relative;
+  z-index: 10;
+  width: 25vw;
+  min-width: 300px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  height: 100%;
+  pointer-events: none; /* 让鼠标穿透点击地图 */
+}
+
+.side-panel > * {
+  pointer-events: auto; /* 恢复子元素的交互 */
+}
+
+.left-panel {
+  justify-content: flex-start;
+  padding: clamp(12px, 1.2vw, 20px);
+  z-index: 0
+}
+
+.right-panel {
+  justify-content: flex-start;
+}
+
+/* ============================================
+   卡片通用样式 
+   ============================================ */
+.card-panel {
+  border-radius: 12px;
+  padding: clamp(16px, 1.5vw, 24px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+}
+
+.panel-title {
+  flex: none;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 800;
+  color:#fff;
+
+}
+
+/* ============================================
+   累计到访
+   ============================================ */
+#panel-counter {
+  flex: none;
+  background: #2B1C07;
+  box-shadow: 0px 4px 16px 0px rgba(80,58,12,0.3);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#panel-counter .panel-title {
+  align-self: flex-start;
+  margin-bottom: 8px;
+}
+
+.counter-number {
+  flex: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(48px, 4vw, 80px);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  margin-top: 5px;
+  line-height: 1;
+  text-align: center;
+  width: 100%;
+}
+
+/* ============================================
+   来源 TOP 榜
+   ============================================ */
+#panel-top-list {
+  flex: 1;
+  background: rgba(155,131,100,0.2);
+  box-shadow: 0px 4px 16px 0px rgba(80,58,12,0.3);
+  border-radius: 8px 8px 8px 8px; 
+   border: none;
+  box-shadow: none;
+  min-height: 0;
+}
+
+.top-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.8vh, 24px);
+  overflow-y: hidden;
+  margin-top: 20px;;
+}
+
+.top-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(14px, 1.1vw, 18px);
+  color: #fff;
+}
+
+.top-item .rank {
+  width: 28px;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #cdb693;
+  text-align: left;
+}
+
+.top-item .city {
+  letter-spacing: 2px;
+  text-align: left;
+}
+
+.top-item .count {
+  font-family: 'Orbitron', sans-serif;
+  color: #e5c78f;
+  font-size: clamp(16px, 1.3vw, 20px);
+  text-align: right;
+}
+
+/* ============================================
+   3D地球容器 - 设计稿：虚线框、海外标注、金色弧线
+   ============================================ */
+.globe-panel {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 280px;
+  min-height: 180px;
+  position: relative;
+  z-index: 10;
+  pointer-events: none;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.globe-container {
+  width: 85%;
+  height: 85%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.globe-image {
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+}
+
+/* 海外标注 - 设计稿：小圆点 + 连线 + 海外 + 41 */
+.globe-overseas {
+  position: absolute;
+  right: 0%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: clamp(12px, 1vw, 16px);
+  line-height: 1.5;
+  text-align: right;
+  z-index: 5;
+}
+.globe-overseas::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-50%);
+  margin-right: 6px;
+}
+.globe-overseas::after {
+  content: '';
+  position: absolute;
+  right: calc(100% + 30px);
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: #2C1D08;
+border-radius: 0px 0px 0px 0px;
+border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+.overseas-count {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(16px, 1.5vw, 24px);
+  color: #fff;
+  display: block;
+  margin-top: 2px;
+}
+
+@keyframes rotateSphere {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   加入事件列表 (右侧上部)
+   ============================================ */
+/* ============================================
+   加入事件列表 - 堆叠卡片效果
+   ============================================ */
+#panel-join-events {
+  flex: none;
+  height: clamp(180px, 20vh, 260px);
+  padding: clamp(12px, 1vw, 18px);
+  padding-bottom: clamp(36px, 4vh, 56px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  position: relative;
+}
+
+.join-list-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.join-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  width: 100%;
+  height: clamp(72px, 9vh, 96px);
+}
+
+.join-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(72px, 9vh, 96px);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 16px);
+  padding: clamp(8px, 0.8vw, 12px);
+  border-radius: 14px;
+  background: rgba(50, 38, 24, 0.92);
+  border: 1px solid rgba(191, 161, 95, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center top;
+}
+
+/* 顶部主卡片 - 大头像 + 文字 */
+.join-item.stack-0 {
+  opacity: 1;
+  z-index: 5;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  background: linear-gradient(135deg, rgba(60, 48, 32, 0.95), rgba(75, 58, 38, 0.92));
+  border-color: rgba(191, 161, 95, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(191, 161, 95, 0.08);
+}
+
+.join-item.stack-0 .join-avatar {
+  width: clamp(52px, 5vw, 72px);
+  height: clamp(52px, 5vw, 72px);
+  border-radius: 12px;
+  border-color: rgba(191, 161, 95, 0.4);
+}
+
+.join-item.stack-0 .join-name {
+  font-size: clamp(15px, 1.3vw, 20px);
+  font-weight: 500;
+}
+
+/* 第2张 */
+.join-item.stack-1 {
+  opacity: 0.65;
+  z-index: 4;
+  transform: translateY(clamp(18px, 2.2vh, 26px)) scale(0.95);
+  border-color: rgba(191, 161, 95, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 第3张 */
+.join-item.stack-2 {
+  opacity: 0.4;
+  z-index: 3;
+  transform: translateY(clamp(34px, 4vh, 46px)) scale(0.9);
+  border-color: rgba(191, 161, 95, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 第4张 */
+.join-item.stack-3 {
+  opacity: 0.2;
+  z-index: 2;
+  transform: translateY(clamp(46px, 5.5vh, 62px)) scale(0.85);
+  border-color: rgba(191, 161, 95, 0.04);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 退场：顶部飞出 */
+.join-item.stack-exit {
+  opacity: 0;
+  z-index: 6;
+  transform: translateY(-120%) scale(0.9);
+  transition: all 0.45s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.join-avatar {
+  width: clamp(28px, 2.2vw, 36px);
+  height: clamp(28px, 2.2vw, 36px);
+  border-radius: 8px;
+  object-fit: cover;
+  background: #333;
+  border: 1px solid rgba(191, 161, 95, 0.25);
+  flex-shrink: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.join-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-name {
+  font-size: clamp(13px, 1.1vw, 16px);
+  color: #fff;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: font-size 0.5s ease;
+}
+
+/* ============================================
+   右侧饼图容器
+   ============================================ */
+#panel-occupation, #panel-age {
+  flex: 1; 
+  min-height: 0; /* Allows flex box to collapse correctly */
+}
+
+.chart-box {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================
+   杂项与动效 
+   ============================================ */
+.number-pulse {
+  animation: numberPulse 0.4s ease;
+}
+
+@keyframes numberPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
