@@ -69,12 +69,13 @@
 
   // 动态注册“海外”坐标
   function updateOverseasCoord() {
+    var anchorEl = document.querySelector('.globe-overseas-anchor');
     var globeEl = document.querySelector('.globe-image');
-    if (!globeEl || typeof CITY_COORDS === 'undefined') return;
-    var rect = globeEl.getBoundingClientRect();
+    if ((!anchorEl && !globeEl) || typeof CITY_COORDS === 'undefined') return;
+    var rect = (anchorEl || globeEl).getBoundingClientRect();
     var mapRect = container.getBoundingClientRect();
     var x = rect.left - mapRect.left + rect.width / 2;
-    var y = rect.top - mapRect.top + rect.height * 0.1;
+    var y = rect.top - mapRect.top + rect.height / 2;
     var coord = mapChart.convertFromPixel({ geoIndex: 0 }, [x, y]);
     if (coord) {
       CITY_COORDS['海外'] = coord;
@@ -390,7 +391,8 @@
     return '<li class="join-item">' +
       '<img class="join-avatar" src="' + avatar + '"/>' +
       '<div class="join-info">' +
-      '<div class="join-name">' + name + '加入DAO龙潭</div>' +
+      '<div class="join-name">' + name + '</div>' +
+      '<div class="join-desc">加入DAO龙潭</div>' +
       '</div>' +
       '</li>';
   }
@@ -400,7 +402,7 @@
   var DANMAKU_RECENT_API_URL = 'http://47.115.206.35:48080/daolongtan/openapi/danmaku/recent';
   var danmakuQueue = [];
   var danmakuTimer = null;
-  var DANMAKU_INTERVAL = 1500;
+  var DANMAKU_INTERVAL = 4500;
   var DANMAKU_TRACKS = 6;
   var danmakuTrackBusy = [];
   for (var _t = 0; _t < DANMAKU_TRACKS; _t++) danmakuTrackBusy[_t] = false;
@@ -464,7 +466,6 @@
     if (!containerEl) return;
 
     var item = danmakuQueue.shift();
-    danmakuQueue.push(item);
 
     var avatar = item.avatar || getDefaultAvatar();
     var text = item.content || '...';

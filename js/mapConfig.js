@@ -19,7 +19,7 @@ function createMapOption() {
       {
         map: 'china',
         roam: false,
-        zoom: 1.25,
+        zoom: 1.21,
         center: [104.5, 36.5],
         zlevel: 1,
         silent: true,
@@ -37,7 +37,7 @@ function createMapOption() {
       {
         map: 'china',
         roam: false,
-        zoom: 1.25,
+        zoom: 1.21,
         center: [104.5, 36.5],
         zlevel: 2,
         label: {

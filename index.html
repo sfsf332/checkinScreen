@@ -15,20 +15,17 @@
 <body>
   <div id="screen-wrapper">
     <header id="header">
-      <div class="header-left">
-        <img src="public/logo.png" alt="DAO龙潭" class="logo-image">
-      </div>
+      
       <div class="header-center">
         <h1>DAO龙潭共创地图</h1>
       </div>
-      <div class="header-right"> &nbsp;
-      </div>
+     
     </header>
 
-    <!-- 全屏弹幕层 -->
-    <div id="danmaku-container"></div>
-
     <div id="main-area">
+      <!-- main-area 弹幕层 -->
+      <div id="danmaku-container"></div>
+
       <!-- 地图 -->
       <div id="map-container"></div>
 
@@ -53,7 +50,10 @@
         <div class="globe-panel" id="panel-globe">
           <div class="globe-container">
             <img class="globe-image" src="public/globel.png" alt="海外的地球">
-            <div class="globe-overseas">海外<br /><span class="overseas-count">41</span></div>
+            <div class="globe-overseas">
+              <span class="globe-overseas-anchor" aria-hidden="true"></span>
+              海外<br /><span class="overseas-count">41</span>
+            </div>
           </div>
         </div>
       </div>
