@@ -26,9 +26,17 @@
 
   initPieCharts();
 
+  var PIE_HIGHLIGHT_INTERVAL = 8000;
+  var occDataCache = [];
+  var ageDataCache = [];
+  var occHighlightIdx = 0;
+  var ageHighlightIdx = 0;
+  var occHighlightTimer = null;
+  var ageHighlightTimer = null;
+
   // 加入列表 - 堆叠卡片翻牌
   var stackIndex = 0;
-  var STACK_VISIBLE = 4;
+  var STACK_VISIBLE = 9;
 
   function updateStack() {
     var listEl = document.getElementById('join-list');
@@ -328,10 +336,21 @@
       series: [{
         type: 'pie',
         radius: ['35%', '65%'],
-        center: ['50%', '50%'],
+        center: ['42%', '50%'],
         itemStyle: { borderRadius: 4, borderColor: '#463d35', borderWidth: 2 },
-        label: { show: true, color: '#cdb693', fontSize: 12, formatter: '{b}' },
-        labelLine: { lineStyle: { color: 'rgba(205, 182, 147, 0.4)' }, smooth: 0.2, length: 10, length2: 15 },
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          color: '#fff2d7',
+          fontSize: 15,
+          fontWeight: 700,
+          formatter: '{b}'
+        },
+        labelLayout: {
+          hideOverlap: false
+        },
+        labelLine: { show: false, lineStyle: { color: 'rgba(205, 182, 147, 0.4)' }, smooth: 0.2, length: 8, length2: 10 },
+        emphasis: { scale: true, scaleSize: 12 },
         data: []
       }]
     };
@@ -342,12 +361,74 @@
   }
 
   var pieColors = ['#c88461', '#cdb693', '#7ec8aa', '#64a0cd', '#eab35f', '#b094c4', '#d8869c', '#a5c05c'];
-  function updatePieCharts() {
-    var occData = Object.keys(occupationMap).map(function (k) { return { name: k, value: occupationMap[k] }; });
-    occChart.setOption({ color: pieColors, series: [{ data: occData }] });
+  function renderPieHighlight(chart, data, colors, radius, highlightIdx) {
+    if (!data || data.length === 0) {
+      chart.setOption({ color: colors, series: [{ radius: radius, data: [] }] });
+      return;
+    }
 
-    var ageData = Object.keys(ageMap).map(function (k) { return { name: k, value: ageMap[k] }; });
-    ageChart.setOption({ color: pieColors.slice().reverse(), series: [{ data: ageData }] });
+    var idx = highlightIdx % data.length;
+    var styledData = data.map(function (item, i) {
+      var active = i === idx;
+      return {
+        name: item.name,
+        value: item.value,
+        label: {
+          show: active,
+          formatter: '{b}',
+          color: '#fff2d7',
+          fontSize: active ? 16 : 14,
+          fontWeight: 700
+        },
+        labelLine: {
+          show: active,
+          lineStyle: { color: 'rgba(205, 182, 147, 0.7)' },
+          length: 8,
+          length2: 10
+        },
+        itemStyle: {
+          opacity: active ? 1 : 0.78
+        }
+      };
+    });
+
+    chart.setOption({
+      color: colors,
+      series: [{
+        radius: radius,
+        data: styledData
+      }]
+    });
+  }
+
+  function startPieHighlightLoop() {
+    if (!occHighlightTimer) {
+      occHighlightTimer = setInterval(function () {
+        if (occDataCache.length === 0) return;
+        occHighlightIdx = (occHighlightIdx + 1) % occDataCache.length;
+        renderPieHighlight(occChart, occDataCache, pieColors, ['35%', '65%'], occHighlightIdx);
+      }, PIE_HIGHLIGHT_INTERVAL);
+    }
+
+    if (!ageHighlightTimer) {
+      ageHighlightTimer = setInterval(function () {
+        if (ageDataCache.length === 0) return;
+        ageHighlightIdx = (ageHighlightIdx + 1) % ageDataCache.length;
+        renderPieHighlight(ageChart, ageDataCache, pieColors.slice().reverse(), ['0%', '70%'], ageHighlightIdx);
+      }, PIE_HIGHLIGHT_INTERVAL);
+    }
+  }
+
+  function updatePieCharts() {
+    occDataCache = Object.keys(occupationMap).map(function (k) { return { name: k, value: occupationMap[k] }; });
+    ageDataCache = Object.keys(ageMap).map(function (k) { return { name: k, value: ageMap[k] }; });
+
+    if (occDataCache.length > 0) occHighlightIdx = occHighlightIdx % occDataCache.length;
+    if (ageDataCache.length > 0) ageHighlightIdx = ageHighlightIdx % ageDataCache.length;
+
+    renderPieHighlight(occChart, occDataCache, pieColors, ['30%', '56%'], occHighlightIdx);
+    renderPieHighlight(ageChart, ageDataCache, pieColors.slice().reverse(), ['0%', '62%'], ageHighlightIdx);
+    startPieHighlightLoop();
   }
 
   // ============ DOM 渲染 ============
@@ -400,7 +481,10 @@
   // ============ 全屏弹幕 ============
   var DANMAKU_API_URL = 'https://daolongtan.cn/daolongtan/openapi/danmaku/list';
   var DANMAKU_RECENT_API_URL = 'http://47.115.206.35:48080/daolongtan/openapi/danmaku/recent';
-  var danmakuQueue = [];
+  var DANMAKU_BASE_LIMIT = 50;
+  var danmakuBaseList = [];
+  var danmakuBaseIndex = 0;
+  var danmakuPriorityQueue = [];
   var danmakuTimer = null;
   var DANMAKU_INTERVAL = 4500;
   var DANMAKU_TRACKS = 6;
@@ -414,7 +498,7 @@
       .then(function (res) { return res.json(); })
       .then(function (res) {
         if (res.code === 200 || res.code === 0) {
-          var items = res.data || [];
+          var items = (res.data || []).slice(0, DANMAKU_BASE_LIMIT);
           startDanmakuLoop(items);
         }
       })
@@ -432,7 +516,8 @@
         if (res.code === 200 || res.code === 0) {
           var items = res.data || [];
           if (items.length > 0) {
-            danmakuQueue = items.concat(danmakuQueue);
+            // recent 弹幕优先展示：插队到最前
+            danmakuPriorityQueue = items.concat(danmakuPriorityQueue);
           }
         }
       })
@@ -442,7 +527,8 @@
   }
 
   function startDanmakuLoop(items) {
-    danmakuQueue = items.slice();
+    danmakuBaseList = items.slice(0, DANMAKU_BASE_LIMIT);
+    danmakuBaseIndex = 0;
     if (danmakuTimer) return;
     danmakuTimer = setInterval(fireDanmaku, DANMAKU_INTERVAL);
     fireDanmaku();
@@ -458,14 +544,20 @@
   }
 
   function fireDanmaku() {
-    if (danmakuQueue.length === 0) return;
     var track = pickTrack();
     if (track === -1) return;
 
     var containerEl = document.getElementById('danmaku-container');
     if (!containerEl) return;
 
-    var item = danmakuQueue.shift();
+    var item = null;
+    if (danmakuPriorityQueue.length > 0) {
+      item = danmakuPriorityQueue.shift();
+    } else if (danmakuBaseList.length > 0) {
+      item = danmakuBaseList[danmakuBaseIndex];
+      danmakuBaseIndex = (danmakuBaseIndex + 1) % danmakuBaseList.length;
+    }
+    if (!item) return;
 
     var avatar = item.avatar || getDefaultAvatar();
     var text = item.content || '...';

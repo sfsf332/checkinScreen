@@ -140,19 +140,30 @@ function createMapOption() {
           show: false // 不发光，只是实心黑点
         },
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: function (val) {
+          var count = (val && val[2]) ? val[2] : 1;
+          return Math.max(7, Math.min(20, 5 + Math.sqrt(count) * 2.2));
+        },
         itemStyle: {
-          color: '#222222', // 纯黑点
+          color: '#00f5ff', // 高亮青色，和棕色底对比更强
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 245, 255, 0.8)'
         },
         label: {
           show: true,
-          formatter: function(params) { return params.name + '\n' + params.value[2]; },
+          formatter: function(params) { return params.name + ' ' + params.value[2]; },
           position: 'bottom',
-          color: '#333333', // 深灰色字
-          fontSize: 12,
+          color: '#ffffff', // 亮白文字
+          textBorderColor: '#1f140a', // 深褐描边，提升可读性
+          textBorderWidth: 3,
+          fontSize: 16,
           fontWeight: 600,
-          lineHeight: 14,
-          distance: 4
+          lineHeight: 20,
+          distance: 8
+        },
+        labelLayout: {
+          hideOverlap: true,
+          moveOverlap: 'shiftY'
         },
         data: []
       }
