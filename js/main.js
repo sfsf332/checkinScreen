@@ -18,6 +18,7 @@
   // ============ DOM ============
   var container = document.getElementById('map-container');
   var totalNomadsEl = document.getElementById('total-nomads');
+  var overseasCountEl = document.querySelector('.overseas-count');
 
   // ============ 初始化图表 ============
   var mapChart = echarts.init(container, null, { renderer: 'canvas' });
@@ -290,6 +291,9 @@
 
   function updateStats() {
     animateNumberBig(totalNomadsEl, totalCount);
+    if (overseasCountEl) {
+      animateNumberBig(overseasCountEl, cityCountMap['海外'] || 0);
+    }
   }
 
   function animateNumberBig(el, target) {
