@@ -27,13 +27,8 @@
 
   initPieCharts();
 
-  var PIE_HIGHLIGHT_INTERVAL = 8000;
   var occDataCache = [];
   var ageDataCache = [];
-  var occHighlightIdx = 0;
-  var ageHighlightIdx = 0;
-  var occHighlightTimer = null;
-  var ageHighlightTimer = null;
 
   // 加入列表 - 堆叠卡片翻牌
   var stackIndex = 0;
@@ -123,7 +118,8 @@
   // ============ 轮询获取真实数据 ============
   var isInitialLoad = true;
   var lastDataCount = 0;
-  var activeFlights = []; // 当前正在展示的“实时”飞线
+  var activeFlights = [];
+  var processedIds = {}; // 当前正在展示的“实时”飞线
 
   function pollData() {
     fetch(API_URL, {
@@ -177,14 +173,17 @@
 
   function formatCity(c) {
     if (!c) return '海外';
-    var s = c.replace(/省|市|维吾尔|壮族|回族|自治区|特别行政区/g, '').trim();
-    var parts = s.split(/\s+/);
-    if (parts.length > 1 && parts[0] === parts[1]) {
-      s = parts[0];
-    } else if (parts.length > 1) {
-      s = parts[parts.length - 1];
+    // 处理逗号分隔的格式，如 "河北省, 邢台市"
+    var segments = c.split(/[,，]/).map(function (seg) { return seg.trim(); }).filter(Boolean);
+    // 优先取最后一段（市级），如找不到坐标则回退到第一段（省级）
+    for (var i = segments.length - 1; i >= 0; i--) {
+      var s = segments[i].replace(/省|市|维吾尔|壮族|回族|自治区|特别行政区/g, '').trim();
+      if (s && typeof getCityCoord === 'function' && getCityCoord(s)) return s;
     }
-    return s || '海外';
+    // 都没匹配到坐标，返回清理后的最后一段名称
+    var fallback = segments[segments.length - 1] || c;
+    fallback = fallback.replace(/省|市|维吾尔|壮族|回族|自治区|特别行政区/g, '').trim();
+    return fallback || '海外';
   }
 
   function handleInitialData(dataList) {
@@ -194,6 +193,9 @@
     ageMap = {};
 
     dataList.forEach(function (item) {
+      // 记录已处理ID
+      if (item.id) processedIds[item.id] = true;
+
       var city = formatCity(item.city);
       cityCountMap[city] = (cityCountMap[city] || 0) + 1;
 
@@ -220,9 +222,17 @@
   }
 
   function handleIncrementalData(newItems) {
-    totalCount += newItems.length;
+    // 去重：过滤已处理过的数据
+    var fresh = newItems.filter(function (item) {
+      if (item.id && processedIds[item.id]) return false;
+      if (item.id) processedIds[item.id] = true;
+      return true;
+    });
+    if (fresh.length === 0) return;
 
-    newItems.forEach(function (item) {
+    totalCount += fresh.length;
+
+    fresh.forEach(function (item) {
       var city = formatCity(item.city);
       cityCountMap[city] = (cityCountMap[city] || 0) + 1;
 
@@ -240,11 +250,11 @@
     updateTopList();
     updatePieCharts();
 
-    // 将新数据前置插入列表
-    prependNewJoin(newItems);
+    // 将新数据前置插入列表顶部
+    prependNewJoin(fresh);
 
-    // 处理实时飞线：每当我们拿到一个真正的增量（非初始加载）
-    newItems.forEach(function (item) {
+    // 处理实时飞线
+    fresh.forEach(function (item) {
       var city = formatCity(item.city);
       var coord;
       if (city === '海外') {
@@ -382,7 +392,7 @@
       series: [{
         type: 'pie',
         radius: ['35%', '65%'],
-        center: ['42%', '50%'],
+        center: ['50%', '50%'],
         itemStyle: { borderRadius: 4, borderColor: '#463d35', borderWidth: 2 },
         avoidLabelOverlap: false,
         label: {
@@ -407,33 +417,31 @@
   }
 
   var pieColors = ['#c88461', '#cdb693', '#7ec8aa', '#64a0cd', '#eab35f', '#b094c4', '#d8869c', '#a5c05c'];
-  function renderPieHighlight(chart, data, colors, radius, highlightIdx) {
+  function renderPieAllLabels(chart, data, colors, radius) {
     if (!data || data.length === 0) {
       chart.setOption({ color: colors, series: [{ radius: radius, data: [] }] });
       return;
     }
 
-    var idx = highlightIdx % data.length;
-    var styledData = data.map(function (item, i) {
-      var active = i === idx;
+    var styledData = data.map(function (item) {
       return {
         name: item.name,
         value: item.value,
         label: {
-          show: active,
+          show: true,
           formatter: '{b}',
           color: '#fff2d7',
-          fontSize: active ? 16 : 14,
+          fontSize: 14,
           fontWeight: 700
         },
         labelLine: {
-          show: active,
+          show: true,
           lineStyle: { color: 'rgba(205, 182, 147, 0.7)' },
           length: 8,
           length2: 10
         },
         itemStyle: {
-          opacity: active ? 1 : 0.78
+          opacity: 1
         }
       };
     });
@@ -447,34 +455,12 @@
     });
   }
 
-  function startPieHighlightLoop() {
-    if (!occHighlightTimer) {
-      occHighlightTimer = setInterval(function () {
-        if (occDataCache.length === 0) return;
-        occHighlightIdx = (occHighlightIdx + 1) % occDataCache.length;
-        renderPieHighlight(occChart, occDataCache, pieColors, ['35%', '65%'], occHighlightIdx);
-      }, PIE_HIGHLIGHT_INTERVAL);
-    }
-
-    if (!ageHighlightTimer) {
-      ageHighlightTimer = setInterval(function () {
-        if (ageDataCache.length === 0) return;
-        ageHighlightIdx = (ageHighlightIdx + 1) % ageDataCache.length;
-        renderPieHighlight(ageChart, ageDataCache, pieColors.slice().reverse(), ['0%', '70%'], ageHighlightIdx);
-      }, PIE_HIGHLIGHT_INTERVAL);
-    }
-  }
-
   function updatePieCharts() {
     occDataCache = Object.keys(occupationMap).map(function (k) { return { name: k, value: occupationMap[k] }; });
     ageDataCache = Object.keys(ageMap).map(function (k) { return { name: k, value: ageMap[k] }; });
 
-    if (occDataCache.length > 0) occHighlightIdx = occHighlightIdx % occDataCache.length;
-    if (ageDataCache.length > 0) ageHighlightIdx = ageHighlightIdx % ageDataCache.length;
-
-    renderPieHighlight(occChart, occDataCache, pieColors, ['30%', '56%'], occHighlightIdx);
-    renderPieHighlight(ageChart, ageDataCache, pieColors.slice().reverse(), ['0%', '62%'], ageHighlightIdx);
-    startPieHighlightLoop();
+    renderPieAllLabels(occChart, occDataCache, pieColors, ['30%', '56%']);
+    renderPieAllLabels(ageChart, ageDataCache, pieColors.slice().reverse(), ['0%', '62%']);
   }
 
   // ============ DOM 渲染 ============
@@ -497,18 +483,16 @@
   function prependNewJoin(items) {
     var listEl = document.getElementById('join-list');
     if (!listEl) return;
-    var total = listEl.children.length;
 
-    var fragment = document.createDocumentFragment();
     var temp = document.createElement('div');
     items.forEach(function (item) { temp.innerHTML += createJoinItemHtml(item); });
 
-    var insertIdx = stackIndex % (total || 1);
-    var refNode = listEl.children[insertIdx] || null;
+    // 插入到 DOM 最前面，并重置 stackIndex，确保新数据立刻显示为顶部卡片
+    var firstChild = listEl.firstElementChild;
     while (temp.firstElementChild) {
-      listEl.insertBefore(temp.firstElementChild, refNode);
+      listEl.insertBefore(temp.firstElementChild, firstChild);
     }
-
+    stackIndex = 0;
     updateStack();
   }
 
@@ -526,7 +510,7 @@
 
   // ============ 全屏弹幕 ============
   var DANMAKU_API_URL = 'https://daolongtan.cn/daolongtan/openapi/danmaku/list';
-  var DANMAKU_RECENT_API_URL = 'http://47.115.206.35:48080/daolongtan/openapi/danmaku/recent';
+  var DANMAKU_RECENT_API_URL = 'https://daolongtan.cn/daolongtan/openapi/danmaku/recent';
   var DANMAKU_BASE_LIMIT = 50;
   var danmakuBaseList = [];
   var danmakuBaseIndex = 0;

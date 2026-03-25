@@ -123,16 +123,23 @@ function getCityCoord(name) {
   // 精确匹配
   if (CITY_COORDS[name]) return CITY_COORDS[name];
 
-  // 去掉 "市"、"省" 后缀匹配
-  var cleanName = name.replace(/[市省自治区壮族回族维吾尔族藏族特别行政区]/g, '');
-  if (CITY_COORDS[cleanName]) return CITY_COORDS[cleanName];
+  // 清理后缀
+  var cleanName = name.replace(/[省市县区旗盟州]/g, '')
+    .replace(/维吾尔|壮族|回族|藏族|自治|特别行政/g, '').trim();
+  if (cleanName && CITY_COORDS[cleanName]) return CITY_COORDS[cleanName];
 
-  // 遍历匹配
+  // 处理可能含空格的格式，如 "河北 邢台"
+  var parts = cleanName.split(/\s+/);
+  for (var p = parts.length - 1; p >= 0; p--) {
+    if (parts[p] && CITY_COORDS[parts[p]]) return CITY_COORDS[parts[p]];
+  }
+
+  // 遍历模糊匹配（原名和清理后的名称都尝试）
   var keys = Object.keys(CITY_COORDS);
   for (var i = 0; i < keys.length; i++) {
-    if (keys[i].indexOf(name) >= 0 || name.indexOf(keys[i]) >= 0) {
-      return CITY_COORDS[keys[i]];
-    }
+    var k = keys[i];
+    if (k.indexOf(name) >= 0 || name.indexOf(k) >= 0) return CITY_COORDS[k];
+    if (cleanName && (k.indexOf(cleanName) >= 0 || cleanName.indexOf(k) >= 0)) return CITY_COORDS[k];
   }
 
   return null;
