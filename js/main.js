@@ -123,6 +123,7 @@
   // ============ 轮询获取真实数据 ============
   var isInitialLoad = true;
   var lastDataCount = 0;
+  var activeFlights = []; // 当前正在展示的“实时”飞线
 
   function pollData() {
     fetch(API_URL, {
@@ -242,6 +243,32 @@
     // 将新数据前置插入列表
     prependNewJoin(newItems);
 
+    // 处理实时飞线：每当我们拿到一个真正的增量（非初始加载）
+    newItems.forEach(function (item) {
+      var city = formatCity(item.city);
+      var coord;
+      if (city === '海外') {
+        coord = typeof CITY_COORDS !== 'undefined' ? CITY_COORDS['海外'] : null;
+      } else {
+        coord = typeof getCityCoord === 'function' ? getCityCoord(city) : null;
+      }
+
+      if (coord) {
+        var flight = {
+          id: Date.now() + Math.random(),
+          name: city,
+          coord: coord
+        };
+        activeFlights.push(flight);
+
+        // 8秒后移除
+        setTimeout(function () {
+          activeFlights = activeFlights.filter(function (f) { return f.id !== flight.id; });
+          updateMapChart();
+        }, FLIGHT_DISPLAY_DURATION);
+      }
+    });
+
     // 更新带有最新常驻飞线和计数的地图节点
     updateMapChart();
   }
@@ -280,11 +307,26 @@
       }
     });
 
+    var realTimeLines = [];
+    var realTimeScatter = [];
+
+    activeFlights.forEach(function (f) {
+      realTimeLines.push({
+        coords: [f.coord, TARGET_POINT.coord]
+      });
+      realTimeScatter.push({
+        name: f.name,
+        value: [f.coord[0], f.coord[1]]
+      });
+    });
+
     mapChart.setOption({
       series: [
         {}, // 第[0]组数据保留目标 DAO 龙潭标志不变
         { data: linesData },
-        { data: scatterData }
+        { data: scatterData },
+        { data: realTimeLines },
+        { data: realTimeScatter }
       ]
     });
   }
